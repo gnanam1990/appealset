@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 1,
+  "status": "SPECIFICATION_ONLY",
+  "definitions": {
+    "functional": [
+      {
+        "id": "FR-01",
+        "title": "Dispute intake and policy versions",
+        "definition": "Freeze tenant-scoped input hash, consent scope, label vocabulary, guideline revision and original dataset version. Deduplicate replayed submissions."
+      },
+      {
+        "id": "FR-02",
+        "title": "Reviewer enrollment and conflicts",
+        "definition": "Store opt-in, language eligibility, calibration expiry, organization link and conflict exclusions. Expose aliases to dataset operators."
+      },
+      {
+        "id": "FR-03",
+        "title": "Paid assignments and leases",
+        "definition": "Reserve slot budgets, issue scoped task offers, record delivery entitlements and reconcile payment references. Disclose pay before reviewer acceptance."
+      },
+      {
+        "id": "FR-04",
+        "title": "Blind reviewer workbench",
+        "definition": "Implement a per-assignment view, draft save and one final versioned opinion with rationale; expire leases and invalidate stale views."
+      },
+      {
+        "id": "FR-05",
+        "title": "Agreement and adjudication",
+        "definition": "Apply a deterministic routing policy after both valid opinions; present conflicting rationales to a qualified expert with an abstain action."
+      },
+      {
+        "id": "FR-06",
+        "title": "QA patch and provenance",
+        "definition": "Produce a deterministic diff pinned to the input version and case decisions, require dataset QA approval and support superseding rulings."
+      },
+      {
+        "id": "FR-07",
+        "title": "Calibration, reporting and recovery",
+        "definition": "Build per-cohort calibration and cost reports, work expiry handling, reviewer payout reconciliation and replay over a clean database snapshot."
+      }
+    ],
+    "nonfunctional": [
+      {
+        "id": "NFR-01",
+        "title": "Replayable evidence",
+        "definition": "A reviewer can reproduce the outcome from the exact input revision, actor scope, persisted decision and redacted evidence reference after a process restart."
+      }
+    ],
+    "invariants": [
+      {
+        "id": "INV-01",
+        "title": "Dispute intake and policy versions",
+        "definition": "A policy change cannot alter an already-open case."
+      },
+      {
+        "id": "INV-02",
+        "title": "Reviewer enrollment and conflicts",
+        "definition": "Assignments honor the policy's required identity and conflict evidence."
+      },
+      {
+        "id": "INV-03",
+        "title": "Paid assignments and leases",
+        "definition": "The two initial assignments and any expert purchase together stay within the authorized cap."
+      },
+      {
+        "id": "INV-04",
+        "title": "Blind reviewer workbench",
+        "definition": "Peer labels, original labels and identifying peer metadata remain hidden during blind review."
+      },
+      {
+        "id": "INV-05",
+        "title": "Agreement and adjudication",
+        "definition": "Different or abstaining labels cannot silently produce a training label."
+      },
+      {
+        "id": "INV-06",
+        "title": "QA patch and provenance",
+        "definition": "Only accepted resolved decisions target matching source item hashes."
+      },
+      {
+        "id": "INV-07",
+        "title": "Calibration, reporting and recovery",
+        "definition": "Counts distinguish resolved, unresolved, paid and pending independently; majority agreement is not labeled ground truth."
+      }
+    ]
+  },
+  "tests": [
+    {
+      "id": "T-001",
+      "title": "Dispute intake and policy versions • expected behavior",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-002",
+      "title": "Dispute intake and policy versions • failure boundary",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-003",
+      "title": "Reviewer enrollment and conflicts • expected behavior",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-004",
+      "title": "Reviewer enrollment and conflicts • failure boundary",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-005",
+      "title": "Paid assignments and leases • expected behavior",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-006",
+      "title": "Paid assignments and leases • failure boundary",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-007",
+      "title": "Blind reviewer workbench • expected behavior",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-008",
+      "title": "Blind reviewer workbench • failure boundary",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-009",
+      "title": "Agreement and adjudication • expected behavior",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-010",
+      "title": "Agreement and adjudication • failure boundary",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-011",
+      "title": "QA patch and provenance • expected behavior",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-012",
+      "title": "QA patch and provenance • failure boundary",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-013",
+      "title": "Calibration, reporting and recovery • expected behavior",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-014",
+      "title": "Calibration, reporting and recovery • failure boundary",
+      "status": "NOT_RUN"
+    }
+  ],
+  "modules": [
+    {
+      "id": "M01",
+      "name": "Dispute intake and policy versions",
+      "file": "prompts/M01.md",
+      "requirements": [
+        "FR-01"
+      ],
+      "nonfunctional": [
+        "NFR-01"
+      ],
+      "invariants": [
+        "INV-01"
+      ],
+      "tests": [
+        "T-001",
+        "T-002"
+      ],
+      "dependsOn": [],
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "M02",
+      "name": "Reviewer enrollment and conflicts",
+      "file": "prompts/M02.md",
+      "requirements": [
+        "FR-02"
+      ],
+      "nonfunctional": [
+        "NFR-01"
+      ],
+      "invariants": [
+        "INV-02"
+      ],
+      "tests": [
+        "T-003",
+        "T-004"
+      ],
+      "dependsOn": [
+        "M01"
+      ],
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "M03",
+      "name": "Paid assignments and leases",
+      "file": "prompts/M03.md",
+      "requirements": [
+        "FR-03"
+      ],
+      "nonfunctional": [
+        "NFR-01"
+      ],
+      "invariants": [
+        "INV-03"
+      ],
+      "tests": [
+        "T-005",
+        "T-006"
+      ],
+      "dependsOn": [
+        "M02"
+      ],
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "M04",
+      "name": "Blind reviewer workbench",
+      "file": "prompts/M04.md",
+      "requirements": [
+        "FR-04"
+      ],
+      "nonfunctional": [
+        "NFR-01"
+      ],
+      "invariants": [
+        "INV-04"
+      ],
+      "tests": [
+        "T-007",
+        "T-008"
+      ],
+      "dependsOn": [
+        "M03"
+      ],
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "M05",
+      "name": "Agreement and adjudication",
+      "file": "prompts/M05.md",
+      "requirements": [
+        "FR-05"
+      ],
+      "nonfunctional": [
+        "NFR-01"
+      ],
+      "invariants": [
+        "INV-05"
+      ],
+      "tests": [
+        "T-009",
+        "T-010"
+      ],
+      "dependsOn": [
+        "M04"
+      ],
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "M06",
+      "name": "QA patch and provenance",
+      "file": "prompts/M06.md",
+      "requirements": [
+        "FR-06"
+      ],
+      "nonfunctional": [
+        "NFR-01"
+      ],
+      "invariants": [
+        "INV-06"
+      ],
+      "tests": [
+        "T-011",
+        "T-012"
+      ],
+      "dependsOn": [
+        "M05"
+      ],
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "M07",
+      "name": "Calibration, reporting and recovery",
+      "file": "prompts/M07.md",
+      "requirements": [
+        "FR-07"
+      ],
+      "nonfunctional": [
+        "NFR-01"
+      ],
+      "invariants": [
+        "INV-07"
+      ],
+      "tests": [
+        "T-013",
+        "T-014"
+      ],
+      "dependsOn": [
+        "M06"
+      ],
+      "status": "NOT_RUN"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "project": "AppealSet",
+  "packVersion": "1.0",
+  "testedSha": null,
+  "targetBranch": null,
+  "modules": [
+    {
+      "id": "M01",
+      "title": "Dispute intake and policy versions",
+      "state": "pending",
+      "owner": null,
+      "commands": [],
+      "evidence": [],
+      "nextAction": "Freeze tenant-scoped input hash, consent scope, label vocabulary, guideline revision and original dataset version. Deduplicate replayed submissions."
+    },
+    {
+      "id": "M02",
+      "title": "Reviewer enrollment and conflicts",
+      "state": "pending",
+      "owner": null,
+      "commands": [],
+      "evidence": [],
+      "nextAction": "Store opt-in, language eligibility, calibration expiry, organization link and conflict exclusions. Expose aliases to dataset operators."
+    },
+    {
+      "id": "M03",
+      "title": "Paid assignments and leases",
+      "state": "pending",
+      "owner": null,
+      "commands": [],
+      "evidence": [],
+      "nextAction": "Reserve slot budgets, issue scoped task offers, record delivery entitlements and reconcile payment references. Disclose pay before reviewer acceptance."
+    },
+    {
+      "id": "M04",
+      "title": "Blind reviewer workbench",
+      "state": "pending",
+      "owner": null,
+      "commands": [],
+      "evidence": [],
+      "nextAction": "Implement a per-assignment view, draft save and one final versioned opinion with rationale; expire leases and invalidate stale views."
+    },
+    {
+      "id": "M05",
+      "title": "Agreement and adjudication",
+      "state": "pending",
+      "owner": null,
+      "commands": [],
+      "evidence": [],
+      "nextAction": "Apply a deterministic routing policy after both valid opinions; present conflicting rationales to a qualified expert with an abstain action."
+    },
+    {
+      "id": "M06",
+      "title": "QA patch and provenance",
+      "state": "pending",
+      "owner": null,
+      "commands": [],
+      "evidence": [],
+      "nextAction": "Produce a deterministic diff pinned to the input version and case decisions, require dataset QA approval and support superseding rulings."
+    },
+    {
+      "id": "M07",
+      "title": "Calibration, reporting and recovery",
+      "state": "pending",
+      "owner": null,
+      "commands": [],
+      "evidence": [],
+      "nextAction": "Build per-cohort calibration and cost reports, work expiry handling, reviewer payout reconciliation and replay over a clean database snapshot."
+    }
+  ]
+}
