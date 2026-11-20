@@ -36,6 +36,10 @@ live process-level journey, and a real-browser CDP check (14/14 steps).
     per-role credential sign-in, blind workbench, 320px + keyboard flow,
     reload persistence, expert ruling, QA export; evidence in
     BROWSER-EVIDENCE.md, setup in BROWSER.md.
+  - Visual pass: console restyled to the KiteBridge/KiteWorkforce vocabulary
+    (warm paper canvas, ink text, warm cards, olive primary actions, serif
+    editorial headings, mono figures, state-contrast badges) — selectors
+    unchanged, verified by the browser check.
 - Working tree or branch requiring transfer: none.
 - Commands, exit codes and tested environment:
   - `npm test` → exit 0, 28 pass (Node v22.23.1, macOS arm64)
