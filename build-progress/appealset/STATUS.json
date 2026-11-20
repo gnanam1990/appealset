@@ -1,7 +1,7 @@
 {
   "project": "AppealSet",
   "packVersion": "1.0",
-  "testedSha": "f92f66147dab3c00f53febcfe431b1fbc5ea510c",
+  "testedSha": "8698d8545c9388d16488959cb62fd3a897c93b67",
   "targetBranch": "devin/appealset",
   "modules": [
     {
