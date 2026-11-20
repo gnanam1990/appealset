@@ -5,7 +5,7 @@ import { makeHarness, seedRoster, makeCase, reviewBoth } from './helpers.ts';
 test('T-005: with a $0.50 cap two $0.10 reviews reserve 20 and the $0.30 expert is reserved only when needed', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 50 });
 
     await reviewBoth(h, r, c.id as string, ['A', 'B']);
@@ -31,7 +31,7 @@ test('T-005: with a $0.50 cap two $0.10 reviews reserve 20 and the $0.30 expert 
 test('T-006: with a $0.40 cap the expert reservation fails and reviewer compensation stays owed', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 40 });
     await reviewBoth(h, r, c.id as string, ['A', 'B']);
     h.tick();
@@ -73,7 +73,7 @@ test('T-006: with a $0.40 cap the expert reservation fails and reviewer compensa
 test('pay terms are disclosed before reviewer acceptance', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 50 });
     const asg = await h.call('POST', `/v1/cases/${c.id}/assign`, {
       actor: r.steward,

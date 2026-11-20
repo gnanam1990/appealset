@@ -7,7 +7,9 @@ import { openDb } from './lib/db.ts';
 import { migrate } from './lib/migrations.ts';
 import { DomainError, badRequest, notFound } from './lib/errors.ts';
 import { hashObject, nowIso } from './lib/hash.ts';
-import { requireActor, requireRole, createActor, listReviewers } from './domain/actors.ts';
+import { requireRole, createActor, listReviewers, mustGet } from './domain/actors.ts';
+import { authenticate, mintCredential, revokeCredential, listCredentials } from './domain/auth.ts';
+import { getActor } from './domain/actors.ts';
 import {
   createPolicy, listPolicies, createItem, listItems, updateItemContent,
   createCase, listCases, getCase, presentCase, setCaseBudget,
@@ -46,29 +48,59 @@ interface Route {
   keys: string[];
   roles: Role[] | null;
   handler: Handler;
+  devOnly?: boolean;
 }
 
-function route(method: string, path: string, roles: Role[] | null, handler: Handler): Route {
+function route(method: string, path: string, roles: Role[] | null, handler: Handler, devOnly = false): Route {
   const keys: string[] = [];
   const pattern = new RegExp(
     '^' + path.replace(/:[^/]+/g, (m) => (keys.push(m.slice(1)), '([^/]+)')) + '$'
   );
-  return { method, pattern, keys, roles, handler };
+  return { method, pattern, keys, roles, handler, devOnly };
 }
 
 const routes: Route[] = [
   route('GET', '/v1/health', null, () => ({ ok: true, service: 'appealset', time: nowIso() })),
 
-  // Local demo only: lets the console offer an actor picker. A real deployment
-  // replaces x-actor-id auth with SSO and drops this endpoint.
+  // Dev fixture only (gated on devFixtures): lets the console offer an actor
+  // picker for the demo roster. Normal use authenticates with provisioned
+  // credentials; do not rely on this endpoint.
   route('GET', '/v1/session/actors', null, (c) =>
     (c.db
       .prepare('SELECT id, tenant_id, alias, role, org_id FROM actors ORDER BY role, alias')
       .all() as Record<string, unknown>[]).map((a) => ({
         id: a.id, tenant_id: a.tenant_id, alias: a.alias, role: a.role, org_id: a.org_id,
-      }))),
+      })), true),
 
-  route('POST', '/v1/actors', ['admin'], (c) => createActor(c.db, c.body as never)),
+  route('GET', '/v1/session', null, (c) => ({
+    id: c.actor.id,
+    alias: c.actor.alias,
+    role: c.actor.role,
+    org_id: c.actor.org_id,
+    tenant_id: c.actor.tenant_id,
+  })),
+
+  route('POST', '/v1/actors', ['admin'], (c) => {
+    const actor = createActor(c.db, c.body as never);
+    const cred = mintCredential(c.db, actor, 'provisioned at enrollment');
+    return { actor, credential: cred.token };
+  }),
+  route('GET', '/v1/credentials', ['admin'], (c) => listCredentials(c.db, c.actor.tenant_id)),
+  route('POST', '/v1/credentials', ['admin'], (c) => {
+    const row = mustGet(
+      c.db
+        .prepare('SELECT * FROM actors WHERE id = ? AND tenant_id = ?')
+        .get(c.body.actor_id as string, c.actor.tenant_id) as { id: string } | undefined,
+      'actor'
+    );
+    const target = getActor(c.db, row.id)!;
+    const cred = mintCredential(c.db, target, c.body.label as string | undefined);
+    return { id: cred.id, token: cred.token };
+  }),
+  route('DELETE', '/v1/credentials/:id', ['admin'], (c) => {
+    revokeCredential(c.db, c.actor, c.params.id);
+    return { revoked: true };
+  }),
   route('GET', '/v1/reviewers', ['admin', 'steward', 'qa', 'budget_owner'], (c) =>
     listReviewers(c.db, c.actor.tenant_id)),
 
@@ -185,9 +217,14 @@ function withIdempotency(c: Ctx, r: Route, op: string, run: () => unknown | Prom
   return runAndStore();
 }
 
-export function createApp(opts: { db: Db; adapter?: PaymentAdapter }) {
+export function createApp(opts: { db: Db; adapter?: PaymentAdapter; devFixtures?: boolean }) {
   const db = opts.db;
   const adapter = opts.adapter ?? new LocalLedgerAdapter();
+  const devFixtures = opts.devFixtures === true;
+  const activeRoutes = routes.filter((r) => !r.devOnly || devFixtures);
+  const OPEN_PATHS = new Set(
+    ['/v1/health', ...(devFixtures ? ['/v1/session/actors'] : [])]
+  );
 
   return async function handle(req: IncomingMessage, res: ServerResponse) {
     try {
@@ -198,15 +235,22 @@ export function createApp(opts: { db: Db; adapter?: PaymentAdapter }) {
         return serveConsole(res, path);
       }
 
-      if (path === '/v1/session/actors' || path === '/v1/health') {
-        const match = routes.find((r) => r.method === req.method && r.pattern.test(path));
+      if (OPEN_PATHS.has(path)) {
+        const match = activeRoutes.find((r) => r.method === req.method && r.pattern.test(path));
         if (!match) throw notFound('route not found');
         const out = await match.handler({ db, req, actor: null as unknown as Actor, params: {}, body: {}, adapter });
         return sendJson(res, 200, out ?? {});
       }
 
-      const actor = requireActor(db, req.headers['x-actor-id'] as string | undefined);
-      const match = routes.find((r) => r.method === req.method && r.pattern.test(path));
+      const actor = authenticate(
+        db,
+        {
+          authorization: req.headers['authorization'] as string | undefined,
+          'x-actor-id': req.headers['x-actor-id'] as string | undefined,
+        },
+        devFixtures
+      );
+      const match = activeRoutes.find((r) => r.method === req.method && r.pattern.test(path));
       if (!match) throw notFound('route not found');
       if (match.roles) requireRole(actor, match.roles);
 
@@ -263,11 +307,18 @@ function serveConsole(res: ServerResponse, path: string) {
   res.end(readFileSync(file));
 }
 
-export function startServer(opts: { dbPath: string; port?: number; adapter?: PaymentAdapter }): Server {
+export function startServer(opts: {
+  dbPath: string;
+  port?: number;
+  adapter?: PaymentAdapter;
+  devFixtures?: boolean;
+}): Server {
   mkdirSync(dirname(opts.dbPath), { recursive: true });
   const db = openDb(opts.dbPath);
   migrate(db);
-  const app = createApp({ db, adapter: opts.adapter });
+  const devFixtures =
+    opts.devFixtures ?? process.env.APPEALSET_DEV_FIXTURES === '1';
+  const app = createApp({ db, adapter: opts.adapter, devFixtures });
   const server = createServer((req, res) => {
     app(req, res).catch((err) => {
       console.error('[server] fatal:', err);

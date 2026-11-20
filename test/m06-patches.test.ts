@@ -17,7 +17,7 @@ async function decidedCase(h: ReturnType<typeof makeHarness>, r: ReturnType<type
 test('T-011: one expert-approved B yields exactly one patch row identifying expert adjudication', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { caseId } = await decidedCase(h, r);
     const patch = await h.call('POST', '/v1/patches', {
       actor: r.qa,
@@ -50,7 +50,7 @@ test('T-011: one expert-approved B yields exactly one patch row identifying expe
 test('T-012: altered source item and abstentions are excluded with surfaced reasons', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     // Case 1: resolved normally.
     const { caseId: c1 } = await decidedCase(h, r);
 
@@ -105,7 +105,7 @@ test('T-012: altered source item and abstentions are excluded with surfaced reas
 test('superseding ruling appends a new decision and the patch follows it', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { caseId } = await decidedCase(h, r);
     // QA supersedes B with C.
     const sup = await h.call('POST', `/v1/cases/${caseId}/decision`, {

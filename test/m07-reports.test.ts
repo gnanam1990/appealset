@@ -27,7 +27,7 @@ async function exportedCase(h: ReturnType<typeof makeHarness>, r: ReturnType<typ
 test('T-013: a restored database reproduces content hash, patch hash and the $0.50 entitlement total', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const caseId = await exportedCase(h, r);
 
     const before = await h.call('POST', `/v1/cases/${caseId}/verify`, { actor: r.qa });
@@ -56,7 +56,7 @@ test('T-013: a restored database reproduces content hash, patch hash and the $0.
 test('T-014: no gold subset shows calibration unavailable; timed-out payout stays pending', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const cal = await h.call('GET', '/v1/reports/calibration', { actor: r.steward });
     assert.equal(cal.body.status, 'unavailable');
     assert.equal(cal.body.reason, 'no_gold_subset');
@@ -94,7 +94,7 @@ test('T-014: no gold subset shows calibration unavailable; timed-out payout stay
 test('overview report counts resolved, unresolved, paid and pending independently', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c1 } = await makeCase(h, r, { capMinor: 50 });
     await reviewBoth(h, r, c1.id as string, ['A', 'B']);
     h.tick();

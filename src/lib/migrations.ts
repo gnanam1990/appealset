@@ -206,6 +206,21 @@ CREATE TABLE audit_log (
 CREATE INDEX ix_audit_tenant ON audit_log(tenant_id, entity, entity_id);
 `,
   },
+  {
+    version: 2,
+    sql: `
+CREATE TABLE credentials (
+  id         TEXT PRIMARY KEY,
+  tenant_id  TEXT NOT NULL,
+  actor_id   TEXT NOT NULL REFERENCES actors(id),
+  token_hash TEXT NOT NULL UNIQUE,
+  label      TEXT,
+  created_at TEXT NOT NULL,
+  revoked_at TEXT
+);
+CREATE INDEX ix_credentials_actor ON credentials(actor_id, revoked_at);
+`,
+  },
 ];
 
 export function migrate(db: Db): number[] {

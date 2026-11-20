@@ -15,7 +15,7 @@ async function offeredTwo(h: ReturnType<typeof makeHarness>, r: ReturnType<typeo
 test('T-007: both reviewers independently complete and reload their own assignments', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { caseId, list } = await offeredTwo(h, r);
 
     for (const [actor, asgId, label] of [
@@ -57,7 +57,7 @@ test('T-007: both reviewers independently complete and reload their own assignme
 test('T-008: another reviewer or guessed id is denied without leaking existence', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { list } = await offeredTwo(h, r);
 
     // rev2 asks for rev1's task: 404, identical to a guessed id.
@@ -77,6 +77,7 @@ test('T-008: another reviewer or guessed id is denied without leaking existence'
       languages: ['en'],
       calibration_expires_at: new Date(Date.now() + 1e8).toISOString(),
     });
+    h.mint(outsider.id);
     const cross = await h.call('GET', `/v1/assignments/${list[0].id}/task`, { actor: outsider.id });
     assert.equal(cross.status, 404);
 
@@ -94,7 +95,7 @@ test('T-008: another reviewer or guessed id is denied without leaking existence'
 test('lease expiry invalidates stale work and frees the slot for reassignment', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 50 });
     const asg = await h.call('POST', `/v1/cases/${c.id}/assign`, {
       actor: r.steward,

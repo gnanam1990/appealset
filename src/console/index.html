@@ -14,10 +14,19 @@
       <strong>AppealSet</strong>
       <span class="brand-sub">adjudication console</span>
     </div>
-    <div class="session">
-      <label for="actor-select">Acting as</label>
-      <select id="actor-select"></select>
-      <span id="session-note" class="muted"></span>
+    <div class="session" id="session-ui">
+      <span id="signed-in" hidden>
+        Acting as <strong id="session-name"></strong>
+        <span id="session-note" class="muted"></span>
+        <button class="secondary" id="signout-btn" type="button">Sign out</button>
+      </span>
+      <span id="signed-out">
+        <label for="actor-select">Demo roster</label>
+        <select id="actor-select" hidden></select>
+        <label for="token-input">Credential</label>
+        <input id="token-input" type="password" placeholder="apsk_…" autocomplete="off">
+        <button class="secondary" id="signin-btn" type="button">Sign in</button>
+      </span>
     </div>
   </header>
 

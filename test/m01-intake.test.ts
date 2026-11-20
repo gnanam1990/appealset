@@ -5,7 +5,7 @@ import { makeHarness, seedRoster, POLICY, ITEM, PAST, FUTURE } from './helpers.t
 test('T-001: replayed intake under one client key returns one case with a stable snapshot', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const pol = await h.call('POST', '/v1/policies', { actor: r.steward, body: POLICY });
     assert.equal(pol.status, 200);
     const item = await h.call('POST', '/v1/items', { actor: r.steward, body: ITEM });
@@ -48,7 +48,7 @@ test('T-001: replayed intake under one client key returns one case with a stable
 test('T-002: expired consent scope or a label absent from the taxonomy blocks intake', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const pol = await h.call('POST', '/v1/policies', { actor: r.steward, body: POLICY });
     const expired = await h.call('POST', '/v1/items', {
       actor: r.steward,

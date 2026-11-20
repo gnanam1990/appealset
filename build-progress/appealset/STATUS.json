@@ -78,8 +78,8 @@
     {
       "id": "sso-identity",
       "status": "unavailable",
-      "missingProof": "identity provider integration; x-actor-id is a local demo credential",
-      "substitute": "actors table + x-actor-id header"
+      "missingProof": "identity provider integration (no external service permitted in this run)",
+      "substitute": "provisioned opaque apsk_ bearer credentials (hashed, revocable) bound to enrolled actors; x-actor-id only under APPEALSET_DEV_FIXTURES=1"
     },
     {
       "id": "partner-consent-and-gold-set",

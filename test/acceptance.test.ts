@@ -13,7 +13,7 @@ import { makeHarness, seedRoster, makeCase, reviewBoth } from './helpers.ts';
 test('acceptance: $0.50 cap produces one expert patch and $0.50 of entitlements', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 50 });
     await reviewBoth(h, r, c.id as string, ['A', 'B']);
     h.tick();
@@ -46,7 +46,7 @@ test('acceptance: $0.50 cap produces one expert patch and $0.50 of entitlements'
 test('acceptance: $0.40 cap leaves reviews payable, waits for expert funds, exports nothing', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 40 });
     await reviewBoth(h, r, c.id as string, ['A', 'B']);
     h.tick();

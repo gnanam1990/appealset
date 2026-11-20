@@ -5,7 +5,7 @@ import { makeHarness, seedRoster, makeCase, reviewBoth } from './helpers.ts';
 test('T-009: A/B disagreement opens exactly one expert case; expert B is recorded with adjudicator and rationale', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 50 });
     await reviewBoth(h, r, c.id as string, ['A', 'B']);
     h.tick();
@@ -46,7 +46,7 @@ test('T-009: A/B disagreement opens exactly one expert case; expert B is recorde
 test('T-010: worker redelivery and a second submit cannot create a second escalation or payout', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 100 });
     const ids = await reviewBoth(h, r, c.id as string, ['A', 'B']);
 
@@ -90,7 +90,7 @@ test('T-010: worker redelivery and a second submit cannot create a second escala
 test('concordant reviews emit a concordant decision without an expert', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 50 });
     await reviewBoth(h, r, c.id as string, ['A', 'A']);
     h.tick();
@@ -108,7 +108,7 @@ test('concordant reviews emit a concordant decision without an expert', async ()
 test('INV-05: expert abstention leaves the case unresolved with an explicit reason', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 50 });
     await reviewBoth(h, r, c.id as string, ['A', 'B']);
     h.tick();

@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { openDb, type Db } from '../src/lib/db.ts';
 import { migrate } from '../src/lib/migrations.ts';
 import { createApp } from '../src/server.ts';
-import { createActor, type CreateActorInput } from '../src/domain/actors.ts';
+import { createActor, getActor, type CreateActorInput } from '../src/domain/actors.ts';
+import { mintCredential } from '../src/domain/auth.ts';
 import { runWorkerTick } from '../src/worker.ts';
 import { createServer, type Server } from 'node:http';
 import { LocalLedgerAdapter } from '../src/payments/local-ledger.ts';
@@ -16,22 +17,31 @@ export interface Harness {
   db: Db;
   dir: string;
   adapter: LocalLedgerAdapter;
+  /** actor_id -> provisioned token. */
+  tokens: Map<string, string>;
+  mint: (actorId: string, label?: string) => string;
   call: (
     method: string,
     path: string,
-    opts?: { actor?: string; body?: unknown; key?: string }
+    opts?: { actor?: string; token?: string; body?: unknown; key?: string; headers?: Record<string, string> }
   ) => Promise<{ status: number; body: Record<string, unknown> }>;
   tick: () => void;
   close: () => void;
 }
 
 /** In-process HTTP app on an ephemeral port with a temp SQLite file. */
-export function makeHarness(): Harness {
+export function makeHarness(opts: { devFixtures?: boolean } = {}): Harness {
   const dir = mkdtempSync(join(tmpdir(), 'appealset-test-'));
   const db = openDb(join(dir, 'test.db'));
   migrate(db);
   const adapter = new LocalLedgerAdapter();
-  const app = createApp({ db, adapter });
+  const app = createApp({ db, adapter, devFixtures: opts.devFixtures === true });
+  const tokens = new Map<string, string>();
+  const mint = (actorId: string, label?: string) => {
+    const { token } = mintCredential(db, getActor(db, actorId)!, label ?? 'test');
+    tokens.set(actorId, token);
+    return token;
+  };
   let server: Server | null = null;
   let base = '';
 
@@ -48,12 +58,15 @@ export function makeHarness(): Harness {
 
   const call: Harness['call'] = async (method, path, opts = {}) => {
     await start;
+    const token = opts.token ?? (opts.actor ? tokens.get(opts.actor) : undefined);
     const res = await fetch(base + path, {
       method,
       headers: {
         'content-type': 'application/json',
-        ...(opts.actor ? { 'x-actor-id': opts.actor } : {}),
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+        ...(opts.actor && !token ? { 'x-actor-id': opts.actor } : {}),
         ...(opts.key ? { 'idempotency-key': opts.key } : {}),
+        ...(opts.headers ?? {}),
       },
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     });
@@ -65,6 +78,8 @@ export function makeHarness(): Harness {
     db,
     dir,
     adapter,
+    tokens,
+    mint,
     call,
     tick: () => void runWorkerTick(db),
     close: () => {
@@ -85,8 +100,14 @@ export interface Roster {
   qa: string;
 }
 
-export function seedRoster(db: Db, tenant = 'tenant-1'): Roster {
-  const mk = (spec: CreateActorInput) => createActor(db, spec).id;
+/** Seed the roster and mint a credential for each actor. */
+export function seedRoster(h: Harness, tenant = 'tenant-1'): Roster {
+  const db = h.db;
+  const mk = (spec: CreateActorInput) => {
+    const id = createActor(db, spec).id;
+    h.mint(id);
+    return id;
+  };
   return {
     admin: mk({ tenant_id: tenant, principal_id: 'p-admin', org_id: 'org-appealset', role: 'admin' }),
     steward: mk({ tenant_id: tenant, principal_id: 'p-steward', org_id: 'org-appealset', role: 'steward' }),

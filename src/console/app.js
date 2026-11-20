@@ -1,5 +1,7 @@
 // AppealSet console — role-aware operator surfaces over the local API.
-// Local demo auth: an actor id is sent as x-actor-id on every request.
+// Auth: provisioned apsk_ bearer credential stored in localStorage.
+// When the server runs APPEALSET_DEV_FIXTURES=1 a demo roster picker also
+// appears and authenticates via the dev-only x-actor-id fixture.
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const view = $('#view');
@@ -7,6 +9,8 @@ const statusEl = $('#status');
 
 let me = null; // { id, alias, role, org_id, tenant_id }
 let actors = [];
+let credential = null; // provisioned bearer token (normal mode)
+let devActorId = null; // dev-fixture identity shortcut (dev mode only)
 
 function fmtMoney(minor, currency = 'USD') {
   if (minor === null || minor === undefined) return '—';
@@ -49,7 +53,8 @@ async function api(method, path, body, key) {
     method,
     headers: {
       'content-type': 'application/json',
-      'x-actor-id': me ? me.id : '',
+      ...(credential ? { authorization: `Bearer ${credential}` } : {}),
+      ...(devActorId && !credential ? { 'x-actor-id': devActorId } : {}),
       ...(key ? { 'idempotency-key': key } : {}),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -646,11 +651,11 @@ async function renderReports() {
 // ---------- admin ----------
 
 async function renderRoster() {
-  const list = await get('/v1/session/actors');
+  const list = await get('/v1/credentials');
   view.innerHTML = `
     <h1>Roster</h1>
-    <div class="panel"><table><thead><tr><th>Alias</th><th>Role</th><th>Org</th><th>Tenant</th><th>ID</th></tr></thead><tbody>
-    ${list.map((a) => `<tr><td>${esc(a.alias)}</td><td>${esc(a.role)}</td><td>${esc(a.org_id)}</td><td>${esc(a.tenant_id)}</td><td class="mono">${esc(a.id)}</td></tr>`).join('')}
+    <div class="panel"><table><thead><tr><th>Alias</th><th>Role</th><th>Credential</th><th>Status</th><th>Created</th></tr></thead><tbody>
+    ${list.map((c) => `<tr><td>${esc(c.actor_alias)}</td><td>${esc(c.actor_role)}</td><td class="mono">${esc(c.id.slice(0, 14))}…</td><td>${c.revoked_at ? badge('bad') + ' revoked' : 'active'}</td><td>${esc(c.created_at.slice(0, 16))}</td></tr>`).join('')}
     </tbody></table></div>
     <div class="panel"><button class="secondary" id="tick">Run worker tick</button></div>`;
   $('#tick').addEventListener('click', async () => {
@@ -686,26 +691,101 @@ async function render() {
   }
 }
 
-async function boot() {
+function showSignedIn() {
+  $('#signed-in').hidden = false;
+  $('#signed-out').hidden = true;
+  $('#session-name').textContent = `${me.alias} — ${me.role}`;
+  $('#session-note').textContent = `${me.org_id} · ${me.tenant_id}`;
+}
+
+function showSignedOut(msg) {
+  $('#signed-in').hidden = true;
+  $('#signed-out').hidden = false;
+  view.innerHTML = `<div class="empty">${esc(msg)}</div>`;
+}
+
+async function signIn() {
   try {
-    actors = await get('/v1/session/actors');
-  } catch {
-    $('#actor-select').innerHTML = '<option value="">server unavailable</option>';
+    me = await get('/v1/session');
+    showSignedIn();
+    renderNav();
+  } catch (err) {
+    announce(`Sign-in failed: ${err.message}`, 'err');
+  }
+}
+
+function signOut() {
+  credential = null;
+  devActorId = null;
+  me = null;
+  try {
+    localStorage.removeItem('appealset-cred');
+    localStorage.removeItem('appealset-actor');
+  } catch { /* private mode */ }
+  $('#nav-list').innerHTML = '';
+  showSignedOut('Signed out.');
+}
+
+async function boot() {
+  $('#signin-btn').addEventListener('click', async () => {
+    credential = $('#token-input').value.trim() || null;
+    devActorId = null;
+    await signIn();
+    if (credential) {
+      try { localStorage.setItem('appealset-cred', credential); } catch { /* private mode */ }
+    }
+  });
+  $('#signout-btn').addEventListener('click', signOut);
+  $('#token-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#signin-btn').click();
+  });
+
+  // Dev fixture: the actor picker exists only when the server runs with
+  // APPEALSET_DEV_FIXTURES=1; selecting an entry uses the x-actor-id shortcut.
+  let roster = null;
+  try {
+    const r = await fetch('/v1/session/actors');
+    if (r.ok) roster = await r.json();
+  } catch { /* server down */ }
+  if (roster) {
+    const sel = $('#actor-select');
+    sel.hidden = false;
+    sel.innerHTML =
+      '<option value="">— demo roster —</option>' +
+      roster.map((a) => `<option value="${a.id}">${esc(a.alias)} — ${esc(a.role)}</option>`).join('');
+    sel.addEventListener('change', async () => {
+      if (!sel.value) return;
+      devActorId = sel.value;
+      credential = null;
+      try { localStorage.setItem('appealset-actor', devActorId); } catch { /* private mode */ }
+      await signIn();
+    });
+  }
+
+  // Restore a previous session.
+  let savedCred = null;
+  let savedActor = null;
+  try {
+    savedCred = localStorage.getItem('appealset-cred');
+    savedActor = localStorage.getItem('appealset-actor');
+  } catch { /* private mode */ }
+  if (savedCred) {
+    credential = savedCred;
+    await signIn();
     return;
   }
-  const sel = $('#actor-select');
-  sel.innerHTML = actors.map((a) => `<option value="${a.id}">${esc(a.alias)} — ${esc(a.role)}</option>`).join('');
-  sel.addEventListener('change', () => {
-    me = actors.find((a) => a.id === sel.value);
-    $('#session-note').textContent = `${me.org_id} · ${me.tenant_id}`;
-    renderNav();
-  });
-  if (actors.length) {
-    sel.value = actors[0].id;
-    sel.dispatchEvent(new Event('change'));
-  } else {
-    view.innerHTML = `<div class="empty">No actors enrolled. Run <code>npm run seed</code> to create the demo roster.</div>`;
+  if (savedActor && roster && roster.some((a) => a.id === savedActor)) {
+    devActorId = savedActor;
+    $('#actor-select').value = savedActor;
+    await signIn();
+    return;
   }
+  showSignedOut(
+    'Sign in with a provisioned credential (apsk_…). ' +
+      (roster
+        ? 'This server runs with dev fixtures: pick a demo roster entry above instead.'
+        : 'Ask your steward or admin for a credential.')
+  );
 }
 
 boot();

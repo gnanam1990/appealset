@@ -6,7 +6,7 @@ import { createActor } from '../src/domain/actors.ts';
 test('T-003: two eligible reviewers from independent organizations fill the two slots', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     const { case: c } = await makeCase(h, r, { capMinor: 50 });
     const res = await h.call('POST', `/v1/cases/${c.id}/assign`, {
       actor: r.steward,
@@ -28,7 +28,7 @@ test('T-003: two eligible reviewers from independent organizations fill the two 
 test('T-004: two accounts mapped to the same principal cannot occupy both slots', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     // A second account sharing p-rev-1's principal.
     const twin = createActor(h.db, {
       tenant_id: 'tenant-1',
@@ -75,7 +75,7 @@ test('T-004: two accounts mapped to the same principal cannot occupy both slots'
 test('INV-02: org separation enforced when the policy requires it', async () => {
   const h = makeHarness();
   try {
-    const r = seedRoster(h.db);
+    const r = seedRoster(h);
     // Policy requiring org separation; rev2 shares org-north via a new actor.
     const sameOrg = createActor(h.db, {
       tenant_id: 'tenant-1',
