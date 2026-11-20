@@ -1,0 +1,16 @@
+{
+  "name": "appealset",
+  "version": "0.1.0",
+  "description": "AppealSet — blind review and adjudication for disputed dataset labels",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node src/server.ts",
+    "worker": "node src/worker.ts",
+    "seed": "node src/seed.ts",
+    "test": "node --test 'test/*.test.ts'"
+  }
+}
