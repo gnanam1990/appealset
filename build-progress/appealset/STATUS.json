@@ -1,0 +1,97 @@
+{
+  "project": "AppealSet",
+  "packVersion": "1.0",
+  "testedSha": "8698d8545c9388d16488959cb62fd3a897c93b67",
+  "targetBranch": "devin/appealset",
+  "modules": [
+    {
+      "id": "M01",
+      "title": "Dispute intake and policy versions",
+      "state": "accepted",
+      "owner": "devin",
+      "commands": ["npm test"],
+      "evidence": ["test/m01-intake.test.ts: T-001 dedupe + stable snapshot, T-002 consent/taxonomy rejection"],
+      "nextAction": "none"
+    },
+    {
+      "id": "M02",
+      "title": "Reviewer enrollment and conflicts",
+      "state": "accepted",
+      "owner": "devin",
+      "commands": ["npm test"],
+      "evidence": ["test/m02-reviewers.test.ts: T-003 eligible pair fills slots, T-004 same-principal rejected; INV-02 org separation"],
+      "nextAction": "none"
+    },
+    {
+      "id": "M03",
+      "title": "Paid assignments and leases",
+      "state": "accepted",
+      "owner": "devin",
+      "commands": ["npm test"],
+      "evidence": ["test/m03-budget.test.ts: T-005 reservations within cap, T-006 waiting_funds recovery, pay disclosure before acceptance"],
+      "nextAction": "none"
+    },
+    {
+      "id": "M04",
+      "title": "Blind reviewer workbench",
+      "state": "accepted",
+      "owner": "devin",
+      "commands": ["npm test"],
+      "evidence": ["test/m04-workbench.test.ts: T-007 independent completion + reload, T-008 404 without existence leak, lease expiry frees slot"],
+      "nextAction": "none"
+    },
+    {
+      "id": "M05",
+      "title": "Agreement and adjudication",
+      "state": "accepted",
+      "owner": "devin",
+      "commands": ["npm test"],
+      "evidence": ["test/m05-routing.test.ts: T-009 one expert escalation + adjudicator recorded, T-010 redelivery idempotent, abstain unresolved"],
+      "nextAction": "none"
+    },
+    {
+      "id": "M06",
+      "title": "QA patch and provenance",
+      "state": "accepted",
+      "owner": "devin",
+      "commands": ["npm test"],
+      "evidence": ["test/m06-patches.test.ts: T-011 single expert patch, T-012 hash-mismatch + abstention excluded, supersede"],
+      "nextAction": "none"
+    },
+    {
+      "id": "M07",
+      "title": "Calibration, reporting and recovery",
+      "state": "accepted",
+      "owner": "devin",
+      "commands": ["npm test"],
+      "evidence": ["test/m07-reports.test.ts: T-013 restore recompute ($0.50), T-014 unavailable calibration + pending payout, INV-07 independent counts"],
+      "nextAction": "none"
+    }
+  ],
+  "externalGates": [
+    {
+      "id": "live-payment-rail",
+      "status": "unavailable",
+      "missingProof": "session-bound paid dispatch + settlement receipt (e.g. Kite Passport task session)",
+      "substitute": "LOCAL-LEDGER adapter, labeled non-settling"
+    },
+    {
+      "id": "sso-identity",
+      "status": "unavailable",
+      "missingProof": "identity provider integration (no external service permitted in this run)",
+      "substitute": "provisioned opaque apsk_ bearer credentials (hashed, revocable) bound to enrolled actors; x-actor-id only under APPEALSET_DEV_FIXTURES=1"
+    },
+    {
+      "id": "partner-consent-and-gold-set",
+      "status": "unavailable",
+      "missingProof": "vendor consent registry feed and steward-held gold subset import",
+      "substitute": "schema fields + calibration report returns 'unavailable' without data"
+    },
+    {
+      "id": "postgres-service",
+      "status": "unavailable",
+      "missingProof": "no running PostgreSQL in this environment",
+      "substitute": "embedded node:sqlite (WAL)"
+    }
+  ]
+}
