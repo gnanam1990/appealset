@@ -59,6 +59,15 @@ function route(method: string, path: string, roles: Role[] | null, handler: Hand
 const routes: Route[] = [
   route('GET', '/v1/health', null, () => ({ ok: true, service: 'appealset', time: nowIso() })),
 
+  // Local demo only: lets the console offer an actor picker. A real deployment
+  // replaces x-actor-id auth with SSO and drops this endpoint.
+  route('GET', '/v1/session/actors', null, (c) =>
+    (c.db
+      .prepare('SELECT id, tenant_id, alias, role, org_id FROM actors ORDER BY role, alias')
+      .all() as Record<string, unknown>[]).map((a) => ({
+        id: a.id, tenant_id: a.tenant_id, alias: a.alias, role: a.role, org_id: a.org_id,
+      }))),
+
   route('POST', '/v1/actors', ['admin'], (c) => createActor(c.db, c.body as never)),
   route('GET', '/v1/reviewers', ['admin', 'steward', 'qa', 'budget_owner'], (c) =>
     listReviewers(c.db, c.actor.tenant_id)),
@@ -187,6 +196,13 @@ export function createApp(opts: { db: Db; adapter?: PaymentAdapter }) {
 
       if (!path.startsWith('/v1/')) {
         return serveConsole(res, path);
+      }
+
+      if (path === '/v1/session/actors' || path === '/v1/health') {
+        const match = routes.find((r) => r.method === req.method && r.pattern.test(path));
+        if (!match) throw notFound('route not found');
+        const out = await match.handler({ db, req, actor: null as unknown as Actor, params: {}, body: {}, adapter });
+        return sendJson(res, 200, out ?? {});
       }
 
       const actor = requireActor(db, req.headers['x-actor-id'] as string | undefined);
